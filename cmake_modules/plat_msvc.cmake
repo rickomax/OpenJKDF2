@@ -14,7 +14,16 @@ macro(plat_initialize)
     set(TARGET_USE_CURL FALSE)
     set(TARGET_COMPILE_FREEGLUT TRUE)
     set(TARGET_FIND_OPENAL FALSE)
-    set(TARGET_USE_GAMENETWORKINGSOCKETS FALSE) # TODO why does this keep breaking :(
+    # Networking backend. GNS is what every other desktop target uses and the only
+    # backend with working multiplayer, but it has historically had trouble
+    # building here, so it stays off by default. Note what "off" costs: with
+    # neither GNS nor BASICSOCKETS, config_platform_deps.cmake falls through to
+    # TARGET_USE_NOSOCKETS and compiles Platform/Networking/None, whose multiplayer
+    # is a stub -- a hardcoded "OpenJKDF2 Loopback" entry that always fails to
+    # connect. Tick MSVC_USE_GAMENETWORKINGSOCKETS (CMake GUI) or pass
+    # -DMSVC_USE_GAMENETWORKINGSOCKETS=ON to build it. # TODO why does this keep breaking :(
+    set(MSVC_USE_GAMENETWORKINGSOCKETS FALSE CACHE BOOL "Build the GameNetworkingSockets multiplayer backend on MSVC (experimental; without it multiplayer is stubbed out)")
+    set(TARGET_USE_GAMENETWORKINGSOCKETS ${MSVC_USE_GAMENETWORKINGSOCKETS})
     set(SDL2_COMMON_LIBS SDL::SDL)
     
     set(TARGET_WIN32 TRUE)
