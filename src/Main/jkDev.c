@@ -1206,7 +1206,14 @@ void jkDev_DrawEntriesGPU()
 #ifdef QOL_IMPROVEMENTS
 int jkDev_CmdNoclip(stdDebugConsoleCmd *pCmd, const char *pArgStr)
 {
-    if (sithNet_isMulti ) return 1;
+    // Added: works in multiplayer too. Everything noclip touches is already scoped to
+    // sithPlayer_g_pLocalPlayerThing, so toggling it only affects the player who typed
+    // it -- remote players keep full collision. The resulting position and the
+    // SITH_PF_FLY/USEGRAVITY change replicate through DSS_THINGPOS like any other
+    // movement, and the noclip path in sithCollision_UpdateThingCollision re-derives
+    // the containing sector when walking through solid geometry, so the sector index
+    // that goes out on the wire stays correct.
+    // Note this makes noclip available in competitive sessions as well, not just co-op.
 
     SithThing *v0; // ecx
     char16_t *v3; // eax
