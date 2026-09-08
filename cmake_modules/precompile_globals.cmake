@@ -15,8 +15,63 @@ else()
 
     # Print the Python executable path
     message(STATUS "Python executable: ${Python3_EXECUTABLE}")
-    set(PYTHON_EXE "${Python3_EXECUTABLE}")
-    set(COGAPP_DEPENDS "${Python3_EXECUTABLE}")
+
+    # Added: provision cog ourselves instead of requiring a manual
+    # `pip3 install cogapp` before the first configure. If the interpreter CMake
+    # found already provides cogapp we use it as-is (so an offline machine that
+    # installed it by hand keeps working); otherwise a venv is created beside the
+    # build tree and cogapp installed into it. The non-MSVC branch above does the
+    # same thing at build time, but its POSIX venv layout (bin/python3) and its
+    # bare `python3` launcher do not exist on Windows, so this is done here at
+    # configure time, where Visual Studio surfaces the errors legibly.
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} -c "import cogapp"
+        RESULT_VARIABLE COGAPP_IMPORT_RESULT
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+
+    if(COGAPP_IMPORT_RESULT EQUAL 0)
+        message(STATUS "Using cogapp from ${Python3_EXECUTABLE}")
+        set(PYTHON_EXE "${Python3_EXECUTABLE}")
+    else()
+        set(COGAPP_VENV "${CMAKE_CURRENT_BINARY_DIR}/cogapp_venv")
+        set(PYTHON_EXE "${COGAPP_VENV}/Scripts/python.exe")
+
+        if(NOT EXISTS "${PYTHON_EXE}")
+            message(STATUS "cogapp not available, creating venv in ${COGAPP_VENV}")
+            execute_process(
+                COMMAND ${Python3_EXECUTABLE} -m venv "${COGAPP_VENV}"
+                RESULT_VARIABLE COGAPP_VENV_RESULT
+            )
+            if(NOT COGAPP_VENV_RESULT EQUAL 0)
+                message(FATAL_ERROR
+                    "Failed to create a venv for cog using ${Python3_EXECUTABLE}. "
+                    "Install cog yourself (`pip install cogapp`) and reconfigure.")
+            endif()
+        endif()
+
+        execute_process(
+            COMMAND ${PYTHON_EXE} -c "import cogapp"
+            RESULT_VARIABLE COGAPP_VENV_IMPORT_RESULT
+            OUTPUT_QUIET
+            ERROR_QUIET
+        )
+        if(NOT COGAPP_VENV_IMPORT_RESULT EQUAL 0)
+            message(STATUS "Installing cogapp into ${COGAPP_VENV}")
+            execute_process(
+                COMMAND ${PYTHON_EXE} -m pip install cogapp
+                RESULT_VARIABLE COGAPP_PIP_RESULT
+            )
+            if(NOT COGAPP_PIP_RESULT EQUAL 0)
+                message(FATAL_ERROR
+                    "Failed to install cogapp into ${COGAPP_VENV} (no network?). "
+                    "Install cog yourself (`pip install cogapp`) and reconfigure.")
+            endif()
+        endif()
+    endif()
+
+    set(COGAPP_DEPENDS "${PYTHON_EXE}")
 endif()
 
 list(JOIN EMBEDDED_RESOURCES "+" EMBEDDED_RESOURCES_SEPARATED)

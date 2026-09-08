@@ -92,13 +92,20 @@ brew install emscripten
 <details>
   <summary>Windows Dependencies</summary>
 
-Download and install [Python 3.8](https://www.python.org/downloads/release/python-380/) (be sure it is added to your PATH when installing).
+Windows needs no package manager. Every library OpenJKDF2 links (SDL, SDL_mixer,
+OpenAL, GLEW, FreeGLUT, zlib, libpng, PhysFS) is built from the git submodules by
+CMake, so only these three are installed by hand:
 
-Install [cog](https://nedbatchelder.com/code/cog/index.html#h_installation) using pip (`pip3 install cogapp`). You may need to specify `pip` instead of `pip3`.
+- **Visual Studio 2022 or newer**, with the C++ and CMake components. Alternatively
+  install [CMake](https://cmake.org/download/) separately.
+- **[Python 3](https://www.python.org/downloads/)**, added to your PATH when installing.
+  CMake installs [cog](https://nedbatchelder.com/code/cog/index.html#h_installation)
+  into a venv under your build folder on the first configure; if your Python already
+  has `cogapp` installed, that one is used instead and nothing is downloaded.
+- **git**, to clone the repository and fetch its submodules.
 
-Download and install the OpenAL 1.1 SDK from [here](https://www.openal.org/downloads/). Then, add `OPENALDIR` to your system environment variables as `C:\Program Files (x86)\OpenAL 1.1 SDK`.
-
-Download and install the latest CMake from [here](https://cmake.org/download/), or use Visual Studio 2022 which includes CMake support.
+An OpenAL SDK is *not* required. `OPENALDIR` and the OpenAL 1.1 SDK were needed by
+older revisions; OpenAL is now compiled from `lib/openal` like everything else.
 
 </details>
 
@@ -211,9 +218,9 @@ make -j10
 </details>
 
 <details>
-  <summary>x86_64 Visual Studio 2022 Project</summary>
+  <summary>x86_64 Visual Studio 2022 (or newer) Project</summary>
 
-Clone the repository using git, then initialize subrepositories (`git submodule update --init`). Then open VS 2022 and select `Open a local folder`. Right click CMakeLists.txt and select `Configure OpenJKDF2` until it succeeds (for some reason it errors a few times initially on SDL2_mixer, etc). Once it succeeds, right click CMakeLists.txt and select `Build`. 
+Clone the repository using git, then initialize subrepositories (`git submodule update --init`). Then open Visual Studio and select `Open a local folder`. Right click CMakeLists.txt and select `Configure OpenJKDF2` until it succeeds (for some reason it errors a few times initially on SDL2_mixer, etc). Once it succeeds, right click CMakeLists.txt and select `Build`. 
 
 After it builds you can set it as a startup item, from there it should work and debug as expected.
 
