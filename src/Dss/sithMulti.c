@@ -1437,6 +1437,29 @@ void sithMulti_Update(int msecDeltaTime)
                             sithMulti_SyncPlayers(sithMulti_newPlayerId, 1);
                             sithMulti_SendWelcome(sithMulti_newPlayerId, sithMulti_curWelcomePlayerNum, sithMulti_newPlayerId);
 
+                            // Added: Co-op. Nothing in the join path ever sent an
+                            // inventory: a deathmatch client just takes the items.dat
+                            // defaults that sithInventory_InitInventory applies. That
+                            // works for deathmatch, but a campaign loadout comes from
+                            // the player profile the host loaded the level with, so a
+                            // co-op joiner spawned with only those defaults -- next to
+                            // nothing in MoTS. Hand them the host's loadout instead.
+                            if ( (sithNet_MultiModeFlags & MULTIMODEFLAG_COOP) && sithPlayer_g_pLocalPlayer )
+                            {
+                                SithThing* pJoinerThing = jkPlayer_playerInfos[sithMulti_curWelcomePlayerNum].pLocalPlayer;
+                                if ( pJoinerThing && pJoinerThing->actorParams.pPlayer && pJoinerThing->actorParams.pPlayer != sithPlayer_g_pLocalPlayer )
+                                {
+                                    for (int binIdx = 0; binIdx < SITHBIN_NUMBINS; binIdx++)
+                                    {
+                                        if ( (sithInventory_g_aTypes[binIdx].flags & SITHINVENTORY_TYPE_REGISTERED) == 0 )
+                                            continue;
+
+                                        pJoinerThing->actorParams.pPlayer->aItems[binIdx] = sithPlayer_g_pLocalPlayer->aItems[binIdx];
+                                        sithDSS_Inventory(pJoinerThing, binIdx, sithMulti_newPlayerId, 1);
+                                    }
+                                }
+                            }
+
                             sithNet_bNeedsFullThingSyncForLeaveJoin = 0;
                             sithMulti_newPlayerId = 0;
                             stdComm_currentBigSyncStage = 2;

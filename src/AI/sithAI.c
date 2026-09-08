@@ -357,7 +357,7 @@ void sithAI_Process()
                     sithAI_InstinctUpdate(actor);
 
                     if (sithNet_isMulti && sithNet_MultiModeFlags & MULTIMODEFLAG_COOP) {
-                        sithThing_SyncThing(actor->thing, THING_SYNC_ALL); // Added
+                        sithThing_SyncThing(actor->thing, THING_SYNC_COOP_PERIODIC); // Added
                     }
                 }
             }
@@ -372,7 +372,7 @@ void sithAI_Process()
                 sithAI_InstinctUpdate(actor);
 
                 if (sithNet_isMulti && sithNet_MultiModeFlags & MULTIMODEFLAG_COOP) {
-                    sithThing_SyncThing(actor->thing, THING_SYNC_ALL); // Added
+                    sithThing_SyncThing(actor->thing, THING_SYNC_COOP_PERIODIC); // Added
                 }
             }
         }

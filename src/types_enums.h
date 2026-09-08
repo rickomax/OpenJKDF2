@@ -1442,6 +1442,13 @@ typedef enum eSithThingSyncFlags
 
     // Helper
     THING_SYNC_ALL = 0xFF,
+
+    // Added: what co-op replicates for an AI actor on each of its AI updates.
+    // Deliberately excludes SITHTHING_SYNC_FULL: a full thing description is a
+    // one-time payload (creation, and the join-time big sync), roughly twice the
+    // size of a state+pos pair, and it is sent reliably -- emitting one per actor
+    // per AI tick saturates the reliable channel and the 32-slot resend buffer.
+    THING_SYNC_COOP_PERIODIC = SITHTHING_SYNC_POS | SITHTHING_SYNC_STATE | THING_SYNC_AI | THING_SYNC_PUPPET,
 } SithThingSyncFlags;
 
 

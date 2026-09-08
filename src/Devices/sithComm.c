@@ -200,7 +200,14 @@ int sithComm_SendMsgToPlayer(SithMessage *pMessage, int idTo, int outstream, int
             }
             ++sithComm_idk2;
             v20 = pMessage->netMsg.field_14;
-            _memcpy(&sithComm_MsgTmpBuf[idx_], pMessage, sizeof(SithMessage));
+            // Added: store into the slot the scan actually chose. `idx` is the
+            // first free slot, or -- when the buffer was full -- the evicted
+            // oldest one, which is the whole point of the `idx = idx_` above.
+            // Storing at `idx_` instead overwrote a still-unacked message
+            // (slot 0 in the common case, since idx_ starts at 0) and left the
+            // free slot unused, so reliable messages were silently dropped and
+            // never retried once more than one was ever in flight.
+            _memcpy(&sithComm_MsgTmpBuf[idx], pMessage, sizeof(SithMessage));
             if ( !v20 )
 LABEL_35:
                 pMessage->netMsg.msgId = 0;
