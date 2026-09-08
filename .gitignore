@@ -1,6 +1,4 @@
 *.o
-*.gob
-*.GOB
 moc*.cpp
 *.EXE
 *.exe
@@ -15,7 +13,6 @@ player
 moc*.h
 DF2
 DF2_res
-MOTS
 TPM
 DW
 Pinball
