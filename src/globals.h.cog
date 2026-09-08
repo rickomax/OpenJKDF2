@@ -1,10 +1,6 @@
 #ifndef _OPENJKDF2_GLOBALS_H
 #define _OPENJKDF2_GLOBALS_H
 
-#ifdef __cplusplus
-//extern "C" {
-#endif
-
 #include "engine_config.h"
 #include "types.h"
 
@@ -31,6 +27,16 @@ typedef struct embeddedResource_t
 #endif
 
 #define NO_REINIT // HACK
+
+// Added: the declarations below are defined by globals.c, which is compiled as C.
+// Without C linkage they are declared as C++ variables in every .cpp that pulls
+// this header in (Platform/Networking/GNS/stdComm_GNS.cpp and friends). GCC and
+// Clang hide the bug -- the Itanium ABI does not mangle global-scope variables,
+// so `int foo;` still emits the symbol `foo` -- but MSVC mangles them to
+// `?foo@@3HA` and the link fails with unresolved externals for every global.
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Addrs
 [[[cog
@@ -157,7 +163,7 @@ extern void OpenJKDF2_Globals_Reset();
 [[[end]]]
 
 #ifdef __cplusplus
-//}
+}
 #endif
 
 #endif // _OPENJKDF2_GLOBALS_H
