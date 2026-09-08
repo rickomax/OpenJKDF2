@@ -214,6 +214,14 @@ int sithMulti_Startup()
     sithMessage_g_outputstream |= 1u;
     sithMessage_g_inputstream |= 1u;
 
+    // Added: Pin the DSS wire format for this session. sithGamesave_Load leaves
+    // sithComm_version set to the loaded save's version, and nothing reset it
+    // when a multiplayer session began -- so under MoTS a peer that had loaded a
+    // save spoke 0x7D6 while a freshly launched peer spoke 6, and the join-time
+    // full-thing sync was parsed with the wrong layout. Both peers derive this
+    // from the game they are running, so they always agree.
+    sithComm_version = COMPAT_NET_VERSION;
+
     // Remove all actor aThings from the world
     sithMulti_RemoveAllActorsFromWorld(sithWorld_g_pCurrentWorld);
 

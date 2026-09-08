@@ -450,6 +450,16 @@
 #define MOTS_ONLY_FLAG(_flag) (Main_bMotsCompat ? (_flag) : (0))
 
 #define COMPAT_SAVE_VERSION (Main_bMotsCompat ? 0x7D6 : 0x6)
+
+// Wire format version for DSS messages. MoTS bumped this to 0x7D6 and added
+// fields to several messages behind it; DF2 stays at 6. Savegames embed DSS
+// messages too, so sithComm_version doubles as the savegame version -- it must
+// be (re)set for whichever of the two is being serialized. Added: multiplayer
+// used to inherit whatever version a previously loaded savegame left behind,
+// which under MoTS made the wire format depend on whether that peer had loaded
+// a save this run, so two peers could disagree on the layout.
+#define COMPAT_NET_VERSION (Main_bMotsCompat ? 0x7D6 : 0x6)
+
 #define JKSAVE_FORMATSTR (Main_bMotsCompat ? "msav%04d.jks" : "save%04d.jks")
 
 extern int Window_isHiDpi;

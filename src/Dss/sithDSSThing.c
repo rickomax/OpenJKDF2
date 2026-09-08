@@ -864,7 +864,9 @@ void sithDSSThing_FullDescription(SithThing *pThing, int idTo, int outstream)
                 NETMSG_PUSHS16(0);
             }
 
-            if (pThing->renderData.paJointAmputationFlags) {
+            // Added: model is only known non-NULL inside the branch above, but
+            // paJointAmputationFlags can be set independently of it.
+            if (model && pThing->renderData.paJointAmputationFlags) {
 
                 int numJoints = 0;
                 for (int i = 0; i < model->numHNodes; i++) {
@@ -1053,19 +1055,22 @@ int sithDSSThing_ProcessFullDescription(SithMessage *pMsg)
             NETMSG_POPSTR(tmp_model, 0x20);
             int unused = NETMSG_POPS16();
             rdModel3* pModel = sithModel_Load(tmp_model, 0);
-            sithThing_SetThingModel(thing, pModel);
-
-            model = pModel;
+            // Added: sithThing_SetThingModel asserts on a NULL model, so a model
+            // the joining peer cannot load must not take down the join.
+            if (pModel) {
+                sithThing_SetThingModel(thing, pModel);
+                model = pModel;
+            }
         }
 
+        // Added: the joint ids must be consumed even when they cannot be applied,
+        // otherwise a thing with no model desynced the rest of this message.
         int numJoints = NETMSG_POPS16();
-        if (model && numJoints > 0) {
-            for (int i = 0; i < numJoints; i++)
-            {
-                int val = NETMSG_POPS16();
-                if (thing->renderData.paJointAmputationFlags && (uint32_t)val < model->numHNodes) {
-                    thing->renderData.paJointAmputationFlags[val] = 1;
-                }
+        for (int i = 0; i < numJoints; i++)
+        {
+            int val = NETMSG_POPS16();
+            if (model && thing->renderData.paJointAmputationFlags && (uint32_t)val < model->numHNodes) {
+                thing->renderData.paJointAmputationFlags[val] = 1;
             }
         }
     }

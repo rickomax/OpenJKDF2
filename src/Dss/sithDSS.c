@@ -18,6 +18,12 @@
 
 #include "jk.h"
 
+// Added: MoTS syncs all 32 force-power keybinds, DF2 syncs 20. Clamped to what
+// this build actually allocates, so a build without JKM_DSS (21 entries) cannot
+// run off the end of sithInventory_powerKeybinds when running -motsCompat.
+#define SITHDSS_NUM_SYNCED_POWERKEYBINDS \
+    ((sithComm_version == 0x7D6 && SITHINVENTORY_NUM_POWERKEYBINDS >= 33) ? 32 : 20)
+
 const char* sithDSS_IdToStr(int id)
 {
     const char* strs[DSS_MAX] = 
@@ -877,7 +883,7 @@ void sithDSS_SyncGameState(int idTo, int outstream)
     NETMSG_PUSHU32(sithPlayer_g_pLocalPlayer->curWeaponID);
     NETMSG_PUSHU32(sithPlayer_g_pLocalPlayer->curPower);
 
-    for (int i = 0; i < ((sithComm_version == 0x7D6) ? 32 : 20); i++)
+    for (int i = 0; i < SITHDSS_NUM_SYNCED_POWERKEYBINDS; i++)
     {
         NETMSG_PUSHU32(sithInventory_powerKeybinds[i].idk);
     }
@@ -945,7 +951,7 @@ int sithDSS_ProcessSyncGameState(SithMessage *pMsg)
     sithPlayer_g_pLocalPlayer->curWeaponID = NETMSG_POPU32();
     sithPlayer_g_pLocalPlayer->curPower = NETMSG_POPU32();
 
-    for (int i = 0; i < ((sithComm_version == 0x7D6) ? 32 : 20); i++)
+    for (int i = 0; i < SITHDSS_NUM_SYNCED_POWERKEYBINDS; i++)
     {
         sithInventory_powerKeybinds[i].idk = NETMSG_POPU32();
     }
