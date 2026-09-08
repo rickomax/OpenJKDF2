@@ -963,9 +963,19 @@ uint32_t stdPlatform_GetTimeMsec()
 static int Dummy_suggestHeap(int which) { return HEAP_ANY; }
 #endif
 
-#ifndef PLATFORM_POSIX
+// Added: defined for every target, not just !PLATFORM_POSIX -- see the note on the
+// declaration in stdPlatform.h. Reports through the host's error printer when one is
+// installed, so the message reaches debug.log under `-debug log`; jk_printf alone only
+// reaches the console, which dies with the process and takes the diagnostic with it.
+// Consecutive repeats of the same site are folded up: these fire from inner loops
+// (rdPuppet_BuildJointMatrices runs per joint per frame), and an unthrottled flushed
+// write per occurrence would itself stall the game we are trying to observe.
 void stdPlatform_Assert(const char *msg, const char *file, int line)
 {
+    static const char* lastFile = NULL;
+    static int lastLine = -1;
+    static int repeats = 0;
+
     char buf[512];
     int lastSlash = 0;
     for (int i = 0; file[i]; i++)
@@ -973,10 +983,30 @@ void stdPlatform_Assert(const char *msg, const char *file, int line)
         if ( file[i] == '\\' )
             lastSlash = i;
     }
-    _sprintf(buf, "%s\n(%s, %d)\n", msg, &file[lastSlash ? lastSlash + 1 : 0], line);
-    jk_printf("ASSERT: %s", buf);
+    const char* pShortFile = &file[lastSlash ? lastSlash + 1 : 0];
+
+    if ( file == lastFile && line == lastLine )
+    {
+        // Same site again: stay quiet, but keep a heartbeat so a wedged loop is visible.
+        if ( ++repeats % 1000 )
+            return;
+        _sprintf(buf, "%s\n(%s, %d) [x%d]\n", msg, pShortFile, line, repeats);
+    }
+    else
+    {
+        lastFile = file;
+        lastLine = line;
+        repeats = 0;
+        _sprintf(buf, "%s\n(%s, %d)\n", msg, pShortFile, line);
+    }
+
+    if ( std_g_pHS && std_g_pHS->errorPrint )
+        std_g_pHS->errorPrint("ASSERT: %s", buf);
+    else
+        jk_printf("ASSERT: %s", buf);
 }
 
+#ifndef PLATFORM_POSIX
 void* stdPlatform_AllocHandle(uint32_t size)
 {
     return _malloc(size);
@@ -1021,9 +1051,9 @@ void stdPlatform_InitServices(HostServices *handlers)
     handlers->errorPrint = stdPlatform_Printf;
     handlers->some_float = 1000.0;
     handlers->debugPrint = 0;
-#ifndef PLATFORM_POSIX
+    // Added: unconditional. Guarded out on PLATFORM_POSIX this left hs.assert NULL,
+    // turning every failing assert into a null-pointer call.
     handlers->assert = stdPlatform_Assert;
-#endif
     handlers->unk_0 = 0;
 #ifndef PLATFORM_POSIX
     handlers->alloc = daAlloc;
