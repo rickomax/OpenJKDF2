@@ -757,6 +757,15 @@ char* _strrchr(char * a, char b)
     return strrchr(a,b);
 }
 
+// Added: MSVC's CRT has no POSIX strtok_r. Its strtok_s takes the same
+// (str, delimiters, context) arguments with the same semantics -- this is the
+// CRT's 3-argument strtok_s, not C11 Annex K's 4-argument one.
+#if defined(_MSC_VER)
+#define jk_strtok_r strtok_s
+#else
+#define jk_strtok_r strtok_r
+#endif
+
 char* _strtok(char * a, const char * b)
 {
     // Use strtok_r with our own private save pointer instead of strtok(). strtok()
@@ -768,7 +777,7 @@ char* _strtok(char * a, const char * b)
     // strtok state with libc corrupts the in-progress parse. A private save pointer
     // makes our tokenization immune to any library strtok() use.
     static char* _strtok_saveptr = NULL;
-    return strtok_r(a, b, &_strtok_saveptr);
+    return jk_strtok_r(a, b, &_strtok_saveptr);
 }
 
 char* _strncat(char* a, const char* b, size_t c)
