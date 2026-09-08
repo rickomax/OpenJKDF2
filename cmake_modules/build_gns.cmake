@@ -16,6 +16,16 @@ else()
     set(GAMENETWORKINGSOCKETS_EXTRA_ARGS "")
 endif()
 
+# Added: state the CRT explicitly rather than relying on MSVC's default, so this
+# side of the protobuf/GNS link cannot drift out of step with the /MD that
+# build_protobuf.cmake now pins protobuf to.
+if(MSVC)
+    list(APPEND GAMENETWORKINGSOCKETS_EXTRA_ARGS
+        -DCMAKE_POLICY_DEFAULT_CMP0091:STRING=NEW
+        -DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=MultiThreadedDLL
+    )
+endif()
+
 set(GameNetworkingSockets_FOUND TRUE)
 set(GameNetworkingSockets_VERSION 1.4.1)
 set(GameNetworkingSockets_INCLUDE_DIRS ${GameNetworkingSockets_ROOT}/include/GameNetworkingSockets)

@@ -106,6 +106,24 @@ if(PROTOBUF_BUILD_PROTOC_BINARIES)
     )
 endif()
 
+# Added: protobuf defaults protobuf_MSVC_STATIC_RUNTIME to ON, which builds it
+# against the static CRT (/MT), while GameNetworkingSockets and openjkdf2 itself
+# use MSVC's default dynamic CRT (/MD). Linking GNS against it then fails with
+# dozens of `mismatch detected for 'RuntimeLibrary'` errors. Pin protobuf to /MD
+# like everything else. protobuf_MSVC_STATIC_RUNTIME is the load-bearing switch
+# (it edits the compile flags directly); CMAKE_MSVC_RUNTIME_LIBRARY is set too,
+# with CMP0091 forced NEW so it is honoured despite CMAKE_POLICY_VERSION_MINIMUM
+# being pinned back to 3.5 below.
+if(MSVC)
+    set(PROTOBUF_MSVC_RUNTIME_ARGS
+        -Dprotobuf_MSVC_STATIC_RUNTIME:BOOL=FALSE
+        -DCMAKE_POLICY_DEFAULT_CMP0091:STRING=NEW
+        -DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=MultiThreadedDLL
+    )
+else()
+    set(PROTOBUF_MSVC_RUNTIME_ARGS "")
+endif()
+
 ExternalProject_Add(
     PROTOBUF
     SOURCE_DIR             ${CMAKE_SOURCE_DIR}/lib/protobuf
@@ -127,6 +145,7 @@ ExternalProject_Add(
                            -Dprotobuf_BUILD_PROTOC_BINARIES:BOOL=${PROTOBUF_BUILD_PROTOC_BINARIES}
                            -Dprotobuf_DISABLE_RTTI:BOOL=TRUE
                            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+                           ${PROTOBUF_MSVC_RUNTIME_ARGS}
                            -DZLIB_ROOT:PATH=${ZLIB_ROOT}
     DEPENDS                ${PROTOBUF_DEPENDS} # add platform specific zlib depency
     BUILD_BYPRODUCTS       ${libprotobuf_STATIC_LIBRARY_PATH} ${libprotobuf_SHARED_LIBRARY_PATH}
